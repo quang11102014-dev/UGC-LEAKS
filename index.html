@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox Auto Free Limited UGC Scanner</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0c10;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #00ffcc;
+            text-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+            margin-bottom: 5px;
+            font-size: 1.8em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #8b92a5;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+        }
+        .ugc-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .ugc-card {
+            background-color: #1f2833;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 1px solid #45f3ff22;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: border 0.3s;
+        }
+        .ugc-card:hover { border-color: #00ffcc; }
+        .ugc-thumb {
+            width: 100%;
+            max-height: 180px;
+            object-fit: contain;
+            background-color: #0b0c10;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .item-name {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 5px 0;
+            color: #45f3ff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .creator-name {
+            font-size: 0.85em;
+            color: #c5c6c7;
+            margin-bottom: 12px;
+        }
+        .badge-free {
+            background-color: #00ffcc;
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .stock-box {
+            background: #151a21;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .btn {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85em;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-copy { background-color: #66fcf1; color: #0b0c10; }
+        .btn-link { background-color: #1f2833; color: #66fcf1; border: 1px solid #66fcf1; }
+        .btn-link:hover { background-color: #66fcf1; color: #0b0c10; }
+        .loading { text-align: center; font-size: 1.2em; color: #66fcf1; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <h1>UGC FREE LIMITED SCANNER</h1>
+    <div class="subtitle">Hệ thống quét tự động vật phẩm giới hạn miễn phí thời gian thực từ Roblox. Tự động cập nhật sau 30 giây.</div>
+    
+    <div id="loading" class="loading">Đang quét vật phẩm Free Limited mới nhất từ hệ thống Roblox...</div>
+    <div class="ugc-container" id="ugcContainer"></div>
+
+    <script>
+        function copyId(id) {
+            navigator.clipboard.writeText(id);
+            alert("Đã copy Asset ID: " + id);
+        }
+
+        async function scanFreeUgc() {
+            const container = document.getElementById('ugcContainer');
+            const loadingText = document.getElementById('loading');
+
+            try {
+                // Quét qua các danh mục phụ kiện phổ biến với giá 0 Robux và loại Limited
+                const searchUrl = 'https://roproxy.com';
+                
+                const response = await fetch(searchUrl);
+                const result = await response.json();
+                const items = result.data || [];
+
+                loadingText.style.display = 'none';
+
+                if (items.length === 0) {
+                    container.innerHTML = '<p class="loading">Hiện tại không tìm thấy vật phẩm Free Limited nào đang mở bán trên Marketplace.</p>';
+                    return;
+                }
+
+                const itemIds = items.map(item => item.id);
+                const thumbResponse = await fetch(`https://roproxy.com{itemIds.join(',')}&returnPolicy=PlaceHolder&size=150x150&format=Png&isCircular=false`);
+                const thumbResult = await thumbResponse.json();
+                const thumbnails = thumbResult.data || [];
+
+                container.innerHTML = ''; // Xóa sạch dữ liệu cũ trước khi nạp mới
+
+                items.forEach(item => {
+                    const thumbObj = thumbnails.find(t => t.targetId === item.id);
+                    const imageUrl = thumbObj ? thumbObj.imageUrl : 'https://placeholder.com';
+
+                    const totalStock = item.unitsValue || 'N/A';
+                    const remainingStock = item.remainingStockQuantity !== undefined ? item.remainingStockQuantity : totalStock;
+
+                    const card = document.createElement('div');
+                    card.className = 'ugc-card';
+                    card.innerHTML = `
+                        <div>
+                            <img class="ugc-thumb" src="${imageUrl}" alt="${item.name}">
+                            <span class="badge-free">FREE LIMITED</span>
+                            <div class="item-name" title="${item.name}">${item.name}</div>
+                            <div class="creator-name">Bởi: <strong>${item.creatorName || 'Roblox User'}</strong></div>
+                        </div>
+                        <div>
+                            <div class="stock-box">
+                                <div>Stocks: <strong>${remainingStock}</strong> / ${totalStock}</div>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-copy" onclick="copyId(${item.id})">Copy ID</button>
+                                <a class="btn btn-link" href="https://roblox.com{item.id}" target="_blank">Link Gốc</a>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("Lỗi quét:", error);
+                loadingText.innerText = "Hệ thống máy chủ Proxy đang bận. Đang tự động thử lại sau ít giây...";
+            }
+        }
+
+        // Chạy lần đầu
+        scanFreeUgc();
+        // Tự động quét lại sau mỗi 30 giây để cập nhật Stock thời gian thực
+        setInterval(scanFreeUgc, 30000);
+    </script>
+</body>
+  </html>
+  
