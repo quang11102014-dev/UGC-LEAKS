@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox Free Limited UGC Sniper</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0c10;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #050508;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.4s ease;
+        }
+        .radar-loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 255, 204, 0.1);
+            border-radius: 50%;
+            border-top-color: #00ffcc;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            color: #00ffcc;
+            font-size: 1.1em;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+            font-weight: bold;
+        }
+        #mainContent {
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.1);
+            padding-bottom: 20px;
+        }
+        h1 {
+            color: #00ffcc;
+            text-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+            margin: 0 0 5px 0;
+            font-size: 2em;
+        }
+        .subtitle {
+            color: #8b92a5;
+            font-size: 0.95em;
+            margin: 0;
+        }
+        .ugc-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 300px;
+        }
+        .ugc-card {
+            background-color: #1a1d24;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 1px solid rgba(69, 243, 255, 0.08);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            transition: all 0.2s ease;
+        }
+        .ugc-card:hover {
+            border-color: #00ffcc;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 255, 204, 0.15);
+        }
+        .ugc-thumb {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            background-color: #0b0c10;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .item-name {
+            font-size: 1.15em;
+            font-weight: bold;
+            margin: 8px 0 4px 0;
+            color: #45f3ff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .creator-name {
+            font-size: 0.85em;
+            color: #99aab5;
+            margin-bottom: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .badge-free {
+            background-color: #00ffcc;
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+        .stock-box {
+            background: #11141a;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            border-left: 3px solid #00ffcc;
+        }
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .btn {
+            padding: 11px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85em;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-copy { background-color: #66fcf1; color: #0b0c10; }
+        .btn-link { background-color: #1f2833; color: #66fcf1; border: 1px solid #66fcf1; }
+        .btn-link:hover { background-color: #66fcf1; color: #0b0c10; }
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 40px auto;
+            gap: 15px;
+            max-width: 1200px;
+        }
+        .page-btn {
+            background-color: #1a1d24;
+            color: #00ffcc;
+            border: 1px solid #00ffcc;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .page-btn:disabled {
+            border-color: #3e4453;
+            color: #3e4453;
+            cursor: not-allowed;
+        }
+        .page-btn:not(:disabled):hover {
+            background-color: #00ffcc;
+            color: #0b0c10;
+        }
+        #pageNumber {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .no-item-text {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 1.2em;
+            color: #8b92a5;
+            padding: 40px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen">
+        <div class="radar-loader"></div>
+        <div class="loading-text" id="statusMessage">SCANNING ROBLOX MARKETPLACE...</div>
+    </div>
+
+    <div id="mainContent">
+        <header>
+            <h1>FREE LIMITED UGC LEAKS</h1>
+            <div class="subtitle">Live automatic marketplace radar for UGC Hunters. Shows active items only.</div>
+        </header>
+        
+        <div class="ugc-container" id="ugcContainer"></div>
+
+        <div class="pagination-container">
+            <button class="page-btn" id="prevBtn" onclick="changePage(-1)" disabled>Previous</button>
+            <span id="pageNumber">Page 1</span>
+            <button class="page-btn" id="nextBtn" onclick="changePage(1)" disabled>Next</button>
+        </div>
+    </div>
+
+    <script>
+        function copyId(id) {
+            navigator.clipboard.writeText(id);
+            alert("Copied Asset ID: " + id);
+        }
+
+        var allItems = [];
+        var currentPage = 1;
+        var itemsPerPage = 12;
+
+        async function scanFreeUgc() {
+            var container = document.getElementById('ugcContainer');
+            var loader = document.getElementById('loadingScreen');
+            var content = document.getElementById('mainContent');
+            var statusText = document.getElementById('statusMessage');
+
+            try {
+                var searchUrl = 'https://roproxy.com';
+                var response = await fetch(searchUrl);
+                var result = await response.json();
+                var rawItems = result.data || [];
+
+                if (rawItems.length === 0) {
+                    hideLoadingScreen(loader, content);
+                    container.innerHTML = '<p class="no-item-text">No active Free Limited UGC found right now. System is active 24/7...</p>';
+                    updatePaginationButtons();
+                    return;
+                }
+
+                var itemIds = rawItems.map(function(item) { return item.id; });
+                var detailsResponse = await fetch('https://roproxy.com', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: itemIds.map(function(id) { return { itemType: "Asset", id: id }; }) })
+                });
+                var detailsResult = await detailsResponse.json();
+                var detailedItems = detailsResult.data || [];
+
+                allItems = detailedItems.filter(function(item) {
+                    var total = item.unitsValue || 0;
+                    var remaining = item.remainingStockQuantity !== undefined ? item.remainingStockQuantity : total;
+                    return total === 0 || remaining > 0;
+                });
+
+                var thumbResponse = await fetch('https://roproxy.com' + itemIds.join(',') + '&returnPolicy=PlaceHolder&size=150x150&format=Png&isCircular=false');
+                var thumbResult = await thumbResponse.json();
+                allItems.thumbnails = thumbResult.data || [];
+
+                hideLoadingScreen(loader, content);
+                displayPage(currentPage);
+
+            } catch (error) {
+                console.error("Scan error:", error);
+                statusText.innerText = "RADAR BUSY. RETRYING AUTOMATICALLY...";
+                setTimeout(scanFreeUgc, 3000);
+            }
+        }
+
+        function hideLoadingScreen(loader, content) {
+            loader.style.opacity = '0';
+            setTimeout(function() { loader.style.display = 'none'; }, 400);
+            content.style.opacity = '1';
+        }
+
+        function displayPage(page) {
+            var container = document.getElementById('ugcContainer');
+            container.innerHTML = '';
+
+            if (allItems.length === 0) {
+                container.innerHTML = '<p class="no-item-text">No active Free Limited UGC with remaining stocks discovered.</p>';
+
+updatePaginationButtons();
+return;
+}
+var startIndex = (page - 1) * itemsPerPage;
+var endIndex = Math.min(startIndex + itemsPerPage, allItems.length);
+var pageItems = allItems.slice(startIndex, endIndex);
+var thumbnails = allItems.thumbnails || [];
+pageItems.forEach(function(item) {
+var thumbObj = thumbnails.find(function(t) { return t.targetId === item.id; });
+var imageUrl = thumbObj && thumbObj.imageUrl ? thumbObj.imageUrl : 'rbxcdn.com';
+var totalStock = item.unitsValue || 'N/A';
+var remainingStock = item.remainingStockQuantity !== undefined ? item.remainingStockQuantity : totalStock;
+var creator = item.creatorName || 'Roblox Creator';
+var card = document.createElement('div');
+card.className = 'ugc-card';
+card.innerHTML = 'IN STOCK' + item.name + 'By: ' + creator + 'Stocks: ' + remainingStock + ' / ' + totalStock + 'Copy IDGet Link';
+container.appendChild(card);
+});
+var totalPages = Math.ceil(allItems.length / itemsPerPage);
+document.getElementById('pageNumber').innerText = 'Page ' + page + ' / ' + (totalPages || 1);
+updatePaginationButtons();
+}
+function changePage(direction) {
+var maxPage = Math.ceil(allItems.length / itemsPerPage);
+var nextTargetPage = currentPage + direction;
+if (nextTargetPage >= 1 && nextTargetPage <= maxPage) {
+currentPage = nextTargetPage;
+displayPage(currentPage);
+window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+}
+function updatePaginationButtons() {
+var maxPage = Math.ceil(allItems.length / itemsPerPage);
+document.getElementById('prevBtn').disabled = currentPage === 1;
+document.getElementById('nextBtn').disabled = currentPage >= maxPage || maxPage === 0;
+}
+scanFreeUgc();
+setInterval(scanFreeUgc, 20000);
+
